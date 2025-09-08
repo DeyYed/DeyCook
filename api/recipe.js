@@ -81,7 +81,22 @@ export default async function handler(req, res) {
   const MOCK_MODE = process.env.MOCK_MODE === 'true' || !API_KEY
 
   try {
-    const body = req.body || {}
+    // Body parsing guard for Vercel Node functions
+    async function getParsedBody(rq) {
+      if (!rq) return {}
+      if (typeof rq.body === 'object' && rq.body !== null) return rq.body
+      if (typeof rq.body === 'string') {
+        try { return JSON.parse(rq.body) } catch { return {} }
+      }
+      // Fallback: read stream
+      const chunks = []
+      for await (const chunk of rq) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+      const raw = Buffer.concat(chunks).toString('utf8')
+      if (!raw) return {}
+      try { return JSON.parse(raw) } catch { return {} }
+    }
+
+    const body = await getParsedBody(req)
     const { ingredients } = body
 
     let list = []
@@ -136,8 +151,9 @@ export default async function handler(req, res) {
       data = match ? JSON.parse(match[0]) : null
     }
 
-    if (!data) return res.status(502).json({ error: 'Invalid model response', raw: text })
-    return res.status(200).json(data)
+  if (!data) return res.status(502).json({ error: 'Invalid model response', raw: text })
+  res.setHeader('Content-Type', 'application/json')
+  return res.status(200).json(data)
   } catch (err) {
     const status = err?.status || 500
     const payload = { error: err?.statusText || 'Failed to generate recipe' }
@@ -145,6 +161,7 @@ export default async function handler(req, res) {
     if (status === 403) {
       payload.hint = 'Enable Generative Language API for the project tied to your API key in Google AI Studio.'
     }
-    return res.status(status).json(payload)
+  res.setHeader('Content-Type', 'application/json')
+  return res.status(status).json(payload)
   }
 }
