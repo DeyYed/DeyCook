@@ -6,10 +6,10 @@ export default function Hero() {
       <div className="grid gap-6 sm:grid-cols-2 sm:items-center">
         <div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
-            Crafted like a 5‑star chef.
+            Cook Book in your device
           </h1>
           <p className="mt-3 text-neutral-600">
-            Enter ingredients—individually or in bulk—and let the AI chef compose a refined recipe.
+            Enter ingredients individually or in bulk and let the AI chef compose a refined recipe.
           </p>
         </div>
         <div className="hidden sm:block justify-self-end">
