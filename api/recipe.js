@@ -62,7 +62,7 @@ Return ONLY JSON (no markdown, no commentary).
 Goal and order:
 1) Provide a concise, refined description of the dish that will be made (summary). Include flavor profile, texture, key techniques, and presentation.
 2) Then list the ingredients with practical kitchen quantities and sizes.
-3) Then provide clear step-by-step instructions.
+3) Then provide clear and detailed step-by-step instructions.
 
 Rules:
 - Use only the provided ingredients as the core. If additions are needed, allow a maximum of 2 very common pantry items (e.g. salt, pepper, oil, stock, herbs). Do not introduce uncommon or luxury extras. If you add extras, include them in extrasMentioned and also in ingredients with quantities.
