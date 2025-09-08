@@ -65,7 +65,7 @@ Goal and order:
 3) Then provide clear step-by-step instructions.
 
 Rules:
-- Use only the provided ingredients as the core. You may add minimal pantry items (salt, pepper, oil, stock, herbs) only if necessary. If you add extras, include them in extrasMentioned and also in ingredients with quantities.
+- Use only the provided ingredients as the core. If additions are needed, allow a maximum of 2 very common pantry items (e.g. salt, pepper, oil, stock, herbs). Do not introduce uncommon or luxury extras. If you add extras, include them in extrasMentioned and also in ingredients with quantities.
 - Fields to produce: title, summary, time, servings, ingredients (array of { name, quantity }), steps (array of strings), extrasMentioned (array of strings).
 - Do NOT prefix steps with numbers or bullets; the client will number them.
 - Keep tone concise and refined.`
@@ -78,7 +78,6 @@ export default async function handler(req, res) {
 
   const API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
   const MODEL_ID = process.env.MODEL_ID || 'gemini-1.5-flash'
-  const MOCK_MODE = process.env.MOCK_MODE === 'true' || !API_KEY
 
   try {
     // Body parsing guard for Vercel Node functions
@@ -96,7 +95,8 @@ export default async function handler(req, res) {
       try { return JSON.parse(raw) } catch { return {} }
     }
 
-    const body = await getParsedBody(req)
+  const body = await getParsedBody(req)
+  if (!API_KEY) return res.status(500).json({ error: 'Missing GOOGLE_API_KEY' })
     const { ingredients } = body
 
     let list = []
@@ -112,30 +112,7 @@ export default async function handler(req, res) {
     const userList = list.map((i) => `- ${String(i).trim()}`).join('\n')
     const userPrompt = `Ingredients:\n${userList}\n\nConstraints:\n- Output JSON ONLY with fields: title (string), summary (string), time (string), servings (number), ingredients (array of { name, quantity? }), steps (string[]), extrasMentioned (string[]).\n- Ingredients: include the provided items; add minimal pantry items only if needed. Provide quantities in common kitchen units (g, ml, tsp, tbsp, cups, pieces).\n- Servings: default to 2 if unspecified.\n- Time: realistic estimate.\n- Steps: clear instructions as an array of strings (do NOT include leading numbers or bullets; the client will number them).`
 
-    if (MOCK_MODE) {
-      const title = `${list[0] ? list[0][0].toUpperCase() + list[0].slice(1) : 'Chef'}-style ${list.length > 1 ? 'fusion ' : ''}recipe`
-      const mock = {
-        title,
-        summary: `A refined, minimalist dish featuring ${list.join(', ')} with balanced seasoning and clean presentation.`,
-        time: '20 minutes',
-        servings: 2,
-        ingredients: [
-          ...list.map((name) => ({ name, quantity: 'to taste' })),
-          { name: 'olive oil', quantity: '1 tbsp' },
-          { name: 'salt', quantity: 'to taste' },
-          { name: 'black pepper', quantity: 'to taste' },
-          { name: 'fresh herbs', quantity: 'few sprigs' },
-        ],
-        steps: [
-          'Prep all ingredients and set out your cookware.',
-          `Season ${list.join(', ')} lightly with salt and pepper.`,
-          'Cook over medium heat with a touch of olive oil until aromatic and tender.',
-          'Adjust seasoning, plate neatly, garnish with herbs, and serve warm.',
-        ],
-        extrasMentioned: ['salt', 'pepper', 'olive oil', 'herbs'],
-      }
-      return res.status(200).json(mock)
-    }
+  // Live API only
 
     let text
     try {

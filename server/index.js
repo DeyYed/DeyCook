@@ -11,10 +11,6 @@ const API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
 if (!API_KEY) {
   console.warn('[warn] GOOGLE_API_KEY is not set. /api/recipe will fail until you configure it.')
 }
-const MOCK_MODE = process.env.MOCK_MODE === 'true' || !API_KEY
-if (MOCK_MODE) {
-  console.info('[info] Running in MOCK_MODE (no external AI calls).')
-}
 const MODEL_ID = process.env.MODEL_ID || 'gemini-1.5-flash'
 const SYSTEM_INSTRUCTION = `You are a professional 5-star chef AI.
 Return ONLY JSON (no markdown, no commentary).
@@ -102,6 +98,7 @@ const responseSchema = {
 
 app.post('/api/recipe', async (req, res) => {
   try {
+  if (!API_KEY) return res.status(500).json({ error: 'Missing GOOGLE_API_KEY' })
     const { ingredients } = req.body || {}
     console.log('[recipe] incoming body:', req.body)
 
@@ -119,31 +116,7 @@ app.post('/api/recipe', async (req, res) => {
     const userList = list.map((i) => `- ${String(i).trim()}`).join('\n')
   const userPrompt = `Ingredients:\n${userList}\n\nConstraints:\n- Output JSON ONLY with fields: title (string), summary (string), time (string), servings (number), ingredients (array of { name, quantity? }), steps (string[]), extrasMentioned (string[]).\n- Ingredients: include the provided items; add minimal pantry items only if needed. Provide quantities in common kitchen units (g, ml, tsp, tbsp, cups, pieces).\n- Servings: default to 2 if unspecified.\n- Time: realistic estimate.\n- Steps: clear instructions as an array of strings (do NOT include leading numbers or bullets; the client will number them).`
 
-    // If in mock mode (no API key), return a local synthesized recipe
-    if (MOCK_MODE) {
-      const title = `${list[0] ? list[0][0].toUpperCase() + list[0].slice(1) : 'Chef'}-style ${list.length > 1 ? 'fusion ' : ''}recipe`
-      const mock = {
-        title,
-        summary: `A refined, minimalist dish featuring ${list.join(', ')} with balanced seasoning and clean presentation.`,
-        time: '20 minutes',
-        servings: 2,
-        ingredients: [
-          ...list.map((name) => ({ name, quantity: 'to taste' })),
-          { name: 'olive oil', quantity: '1 tbsp' },
-          { name: 'salt', quantity: 'to taste' },
-          { name: 'black pepper', quantity: 'to taste' },
-          { name: 'fresh herbs', quantity: 'few sprigs' },
-        ],
-        steps: [
-          'Prep all ingredients and set out your cookware.',
-          `Season ${list.join(', ')} lightly with salt and pepper.`,
-          'Cook over medium heat with a touch of olive oil until aromatic and tender.',
-          'Adjust seasoning, plate neatly, garnish with herbs, and serve warm.',
-        ],
-        extrasMentioned: ['salt', 'pepper', 'olive oil', 'herbs'],
-      }
-      return res.json(mock)
-    }
+  // Proceed with live API only
 
     let text
     try {
@@ -187,7 +160,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }))
 // Optional: quick Gemini ping to validate API key/project setup
 app.get('/api/ping-gemini', async (_req, res) => {
   try {
-  if (MOCK_MODE) return res.json({ ok: true, model: 'mock', sample: 'Pong!' })
+  if (!API_KEY) return res.status(500).json({ ok: false, error: 'Missing GOOGLE_API_KEY' })
   const sample = await callGeminiREST({ prompt: 'ping', structured: false })
   return res.json({ ok: true, model: MODEL_ID, sample: sample?.slice(0, 40) || '' })
   } catch (err) {

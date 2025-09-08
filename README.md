@@ -1,6 +1,6 @@
 # DeyCook — AI Five‑Star Chef
 
-Premium, responsive white‑theme app where you add ingredients and an AI chef composes a refined recipe. Includes an Express backend that calls Google Gemini via REST (with a local mock mode).
+Premium, responsive white‑theme app where you add ingredients and an AI chef composes a refined recipe. Includes an Express backend that calls Google Gemini via REST.
 
 ## Features
 
@@ -37,15 +37,11 @@ Copy `.env.example` to `.env`, then set:
 - `GOOGLE_API_KEY` — your Gemini API key
 - `MODEL_ID` — default `gemini-1.5-flash`
 - `PORT` — default `3001`
-- `MOCK_MODE` — `true` to bypass AI calls and return a local recipe (great for dev)
+	(no mock mode; an API key is required)
 
 PowerShell (Windows) example:
 
 ```powershell
-# Use mock mode for local testing
-$env:MOCK_MODE = 'true'
-
-# Or with a real key
 $env:GOOGLE_API_KEY = 'your_key_here'
 ```
 
@@ -110,7 +106,7 @@ Response:
 Health and diagnostics:
 
 - GET `/api/health` → `{ ok: true }`
-- GET `/api/ping-gemini` → `{ ok: true, model, sample }` (or `{ ok: true, model: "mock" }` in mock mode)
+- GET `/api/ping-gemini` → `{ ok: true, model, sample }`
 
 ## Build
 
@@ -122,7 +118,7 @@ npm run preview
 ## Troubleshooting
 
 - 500 on `/api/recipe`:
-	- Missing/invalid `GOOGLE_API_KEY`? Use `MOCK_MODE=true` or set a valid key.
+	- Missing/invalid `GOOGLE_API_KEY`? Set a valid key in your environment.
 	- Gemini structured outputs not permitted on your account? The server auto‑falls back to a plain JSON prompt; check the response body for `error/details` hints.
 - Port in use (3001/5173):
 	- `npm run stop:all` to free ports (uses kill‑port), then start again.
