@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* Global typography for a premium, white theme */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #fff;
+  color: #0a0a0a;
+}
+
+/* Brand font pairing: headings serif, body sans */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+body, input, textarea, button {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Chef hat animations */
+@keyframes hatPulse {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.chef-hat-pulse {
+  transform-origin: center;
+  animation: hatPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes hatFloat {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+.chef-hat-float {
+  transform-origin: center;
+  animation: hatFloat 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chef-hat-pulse, .chef-hat-float {
+    animation: none !important;
+  }
+}
