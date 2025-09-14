@@ -12,18 +12,14 @@ export default function RecipeSection({ loading, recipe }) {
     if (!recipe) return
     const doc = new jsPDF({ unit: 'pt', format: 'a4' })
 
-    // Brand header: logo + name
     const logoUrl = '/chef-icon-logo.png'
     const pageWidth = doc.internal.pageSize.getWidth()
     const margin = 48
     const startY = margin
 
-    // Title area
     const title = recipe.title || 'Recipe'
     const subtitle = `${recipe.time || '-'} • Serves ${recipe.servings ?? '-'}`
 
-    // Try to load logo (optional)
-    // jsPDF needs base64 or HTMLImageElement; we'll attempt dynamic image loading
     const addHeader = (img) => {
       if (img) {
         const logoW = 36, logoH = 36

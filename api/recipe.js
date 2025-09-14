@@ -71,6 +71,7 @@ Validation & normalization:
   {"title":"Invalid ingredients","summary":"No valid ingredients detected. Please provide real food ingredients.","time":"-","servings":0,"ingredients":[],"steps":["No recipe can be made with the provided inputs."],"extrasMentioned":[]}
 
 Rules:
+- Use all ingredients provided by the user
 - Use only the provided ingredients as the core. If additions are needed, allow a maximum of 2 very common pantry items (e.g. salt, pepper, oil, stock, herbs). Do not introduce uncommon or luxury extras. If you add extras, include them in extrasMentioned and also in ingredients with quantities.
 - Fields to produce: title, summary, time, servings, ingredients (array of { name, quantity }), steps (array of strings), extrasMentioned (array of strings).
 - Do NOT prefix steps with numbers or bullets; the client will number them.
