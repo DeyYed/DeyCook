@@ -1,8 +1,13 @@
-import { useCallback } from 'react'
-import { ChefHat, Sparkles, Clock, Users } from './Icons'
+import { useCallback, useMemo, useState } from 'react'
+import { ChefHat, Sparkles, Clock, Users, Mail } from './Icons'
 import jsPDF from 'jspdf'
 
 export default function RecipeSection({ loading, recipe }) {
+  const [emailOpen, setEmailOpen] = useState(false)
+  const [email, setEmail] = useState('')
+  const [sendLoading, setSendLoading] = useState(false)
+  const [sendMsg, setSendMsg] = useState('')
+
   const handleDownload = useCallback(() => {
     if (!recipe) return
     const doc = new jsPDF({ unit: 'pt', format: 'a4' })
@@ -109,6 +114,33 @@ export default function RecipeSection({ loading, recipe }) {
     img.onerror = () => { addHeader(null); addBody(); doc.save(`${title}.pdf`) }
     img.src = logoUrl
   }, [recipe])
+
+  const canSend = useMemo(() => /.+@.+\..+/.test(email.trim()), [email])
+
+  const handleSend = useCallback(async () => {
+    if (!recipe || !canSend) return
+    setSendLoading(true)
+    setSendMsg('')
+    try {
+      const res = await fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), recipe }),
+      })
+      if (!res.ok) {
+        let info = 'Failed to send'
+        try { const data = await res.json(); info = data?.error || JSON.stringify(data) } catch {}
+        throw new Error(info)
+      }
+      setSendMsg('Sent! Please check your inbox.')
+      setEmail('')
+      setTimeout(() => setEmailOpen(false), 1200)
+    } catch (e) {
+      setSendMsg(String(e?.message || 'Send failed'))
+    } finally {
+      setSendLoading(false)
+    }
+  }, [email, recipe, canSend])
   return (
     <section id="recipe" className="mt-10">
     {loading && (
@@ -155,7 +187,13 @@ export default function RecipeSection({ loading, recipe }) {
             })}
           </ol>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={() => setEmailOpen(true)}
+            className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium hover:bg-neutral-50 inline-flex items-center gap-2"
+          >
+            <Mail className="h-4 w-4" /> Send to email
+          </button>
           <button
             onClick={handleDownload}
             className="rounded-xl border border-neutral-200 bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-black"
@@ -163,6 +201,37 @@ export default function RecipeSection({ loading, recipe }) {
             Download PDF
           </button>
         </div>
+
+        {/* Email Modal */}
+        {emailOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/20" onClick={() => setEmailOpen(false)} />
+            <div className="relative z-10 w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl">
+              <h3 className="text-base font-semibold">Send to email</h3>
+              <p className="mt-1 text-sm text-neutral-600">Enter your email address and we’ll send this recipe.</p>
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none ring-0 focus:border-neutral-400"
+                />
+              </div>
+              {sendMsg && <div className="mt-2 text-sm text-neutral-700">{sendMsg}</div>}
+              <div className="mt-4 flex justify-end gap-2">
+                <button onClick={() => setEmailOpen(false)} className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium hover:bg-neutral-50">Cancel</button>
+                <button
+                  disabled={!canSend || sendLoading}
+                  onClick={handleSend}
+                  className="rounded-xl border border-neutral-200 bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
+                >
+                  {sendLoading ? 'Sending…' : 'Send email'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         </>
       )}
     </section>

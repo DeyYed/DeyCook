@@ -64,6 +64,12 @@ Goal and order:
 2) Then list the ingredients with practical kitchen quantities and sizes.
 3) Then provide clear and detailed step-by-step instructions.
 
+Validation & normalization:
+- Correct obvious typos in ingredient names (e.g., "tomto" -> "tomato").
+- Ignore non-food/random words (e.g., people names like "Dey Dey").
+- If after correction fewer than 2 valid ingredients remain, do not generate a recipe. Return this minimal object instead:
+  {"title":"Invalid ingredients","summary":"No valid ingredients detected. Please provide real food ingredients.","time":"-","servings":0,"ingredients":[],"steps":["No recipe can be made with the provided inputs."],"extrasMentioned":[]}
+
 Rules:
 - Use only the provided ingredients as the core. If additions are needed, allow a maximum of 2 very common pantry items (e.g. salt, pepper, oil, stock, herbs). Do not introduce uncommon or luxury extras. If you add extras, include them in extrasMentioned and also in ingredients with quantities.
 - Fields to produce: title, summary, time, servings, ingredients (array of { name, quantity }), steps (array of strings), extrasMentioned (array of strings).
@@ -110,7 +116,7 @@ export default async function handler(req, res) {
     }
 
     const userList = list.map((i) => `- ${String(i).trim()}`).join('\n')
-    const userPrompt = `Ingredients:\n${userList}\n\nConstraints:\n- Output JSON ONLY with fields: title (string), summary (string), time (string), servings (number), ingredients (array of { name, quantity? }), steps (string[]), extrasMentioned (string[]).\n- Ingredients: include the provided items; add minimal pantry items only if needed. Provide quantities in common kitchen units (g, ml, tsp, tbsp, cups, pieces).\n- Servings: default to 2 if unspecified.\n- Time: realistic estimate.\n- Steps: clear instructions as an array of strings (do NOT include leading numbers or bullets; the client will number them).`
+  const userPrompt = `Ingredients:\n${userList}\n\nConstraints:\n- Correct obvious typos in ingredient names and ignore non-food/random words.\n- If fewer than 2 valid ingredients remain after correction, produce the minimal refusal object specified in the system instructions.\n- Output JSON ONLY with fields: title (string), summary (string), time (string), servings (number), ingredients (array of { name, quantity? }), steps (string[]), extrasMentioned (string[]).\n- Ingredients: include the provided items; add minimal pantry items only if needed. Provide quantities in common kitchen units (g, ml, tsp, tbsp, cups, pieces).\n- Servings: default to 2 if unspecified.\n- Time: realistic estimate.\n- Steps: clear instructions as an array of strings (do NOT include leading numbers or bullets; the client will number them).`
 
   // Live API only
 
