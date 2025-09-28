@@ -84,7 +84,8 @@ export default async function handler(req, res) {
   }
 
   const API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
-  const MODEL_ID = process.env.MODEL_ID || 'gemini-1.5-flash'
+  // Default model updated to Gemini 2.5 Flash Lite
+  const MODEL_ID = process.env.MODEL_ID || 'gemini-2.5-flash-lite'
 
   try {
     // Body parsing guard for Vercel Node functions

@@ -11,7 +11,8 @@ const API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
 if (!API_KEY) {
   console.warn('[warn] GOOGLE_API_KEY is not set. /api/recipe will fail until you configure it.')
 }
-const MODEL_ID = process.env.MODEL_ID || 'gemini-1.5-flash'
+// Default model updated to Gemini 2.5 Flash Lite
+const MODEL_ID = process.env.MODEL_ID || 'gemini-2.5-flash-lite'
 const SYSTEM_INSTRUCTION = `You are a professional 5-star chef AI.
 Return ONLY JSON (no markdown, no commentary).
 

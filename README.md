@@ -15,7 +15,7 @@ Premium, responsive white‑theme app where you add ingredients and an AI chef c
 
 - Frontend: Vite + React 19 + Tailwind v4 (`@tailwindcss/vite`)
 - Backend: Express (Node 18+ global fetch)
-- AI: Google Generative Language API (Gemini 1.5 Flash) via REST
+- AI: Google Generative Language API (Gemini 2.5 Flash Lite) via REST
 - Dev proxy: Vite proxies `/api` → `http://localhost:3001`
 
 ## Prerequisites
@@ -35,7 +35,7 @@ npm install
 Copy `.env.example` to `.env`, then set:
 
 - `GOOGLE_API_KEY` — your Gemini API key
-- `MODEL_ID` — default `gemini-1.5-flash`
+- `MODEL_ID` — default `gemini-2.5-flash-lite`
 - `PORT` — default `3001`
 	(no mock mode; an API key is required)
 

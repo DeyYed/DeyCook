@@ -9,7 +9,8 @@ function buildUrl(modelId, apiKey) {
 export default async function handler(_req, res) {
   try {
     const API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
-    const MODEL_ID = process.env.MODEL_ID || 'gemini-1.5-flash'
+  // Default model updated to Gemini 2.5 Flash Lite
+  const MODEL_ID = process.env.MODEL_ID || 'gemini-2.5-flash-lite'
   if (!API_KEY) return res.status(500).json({ ok: false, error: 'Missing GOOGLE_API_KEY' })
 
     const body = {
