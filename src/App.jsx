@@ -14,6 +14,7 @@ function App() {
   const [ingredients, setIngredients] = useState([])
   const [loading, setLoading] = useState(false)
   const [recipe, setRecipe] = useState(null)
+  const [includeVideo, setIncludeVideo] = useState(false)
 
   const canGetRecipe = useMemo(
     () => ingredients.filter((i) => i?.trim()).length >= MIN_INGREDIENTS_FOR_RECIPE,
@@ -53,7 +54,7 @@ function App() {
       const res = await fetch('/api/recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ingredients: clean }),
+        body: JSON.stringify({ ingredients: clean, includeVideo }),
       })
       if (!res.ok) {
         let info = 'Failed to generate'
@@ -90,6 +91,8 @@ function App() {
               onAddSingle={handleAddSingle}
               onAddBulk={handleAddBulk}
               onClear={() => setIngredients([])}
+              includeVideo={includeVideo}
+              setIncludeVideo={setIncludeVideo}
             />
             <Tips minIngredients={MIN_INGREDIENTS_FOR_RECIPE} />
           </section>

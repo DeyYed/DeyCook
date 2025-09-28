@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node ./server/index.js",
-    "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
-  "start:all": "npm run stop:all && npm run dev:full",
-  "stop:all": "kill-port 3001 5173 || exit 0",
-  "restart:all": "npm run stop:all && npm run start:all",
+    "server": "node ./server/index.js", 
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\"", 
+    "start:all": "npm run dev", 
+    "stop:all": "kill-port 5173 || exit 0", 
+    "restart:all": "npm run stop:all && npm run start:all",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -38,5 +38,8 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "vite": "^7.1.2"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   }
 }

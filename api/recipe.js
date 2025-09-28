@@ -86,6 +86,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
   // Default model updated to Gemini 2.5 Flash Lite
   const MODEL_ID = process.env.MODEL_ID || 'gemini-2.5-flash-lite'
+  const YT_KEY = process.env.YOUTUBE_API_KEY
 
   try {
     // Body parsing guard for Vercel Node functions
@@ -105,7 +106,7 @@ export default async function handler(req, res) {
 
   const body = await getParsedBody(req)
   if (!API_KEY) return res.status(500).json({ error: 'Missing GOOGLE_API_KEY' })
-    const { ingredients } = body
+    const { ingredients, includeVideo } = body
 
     let list = []
     if (Array.isArray(ingredients)) list = ingredients
@@ -118,7 +119,49 @@ export default async function handler(req, res) {
     }
 
     const userList = list.map((i) => `- ${String(i).trim()}`).join('\n')
-  const userPrompt = `Ingredients:\n${userList}\n\nConstraints:\n- Correct obvious typos in ingredient names and ignore non-food/random words.\n- If fewer than 2 valid ingredients remain after correction, produce the minimal refusal object specified in the system instructions.\n- Output JSON ONLY with fields: title (string), summary (string), time (string), servings (number), ingredients (array of { name, quantity? }), steps (string[]), extrasMentioned (string[]).\n- Ingredients: include the provided items; add minimal pantry items only if needed. Provide quantities in common kitchen units (g, ml, tsp, tbsp, cups, pieces).\n- Servings: default to 2 if unspecified.\n- Time: realistic estimate.\n- Steps: clear instructions as an array of strings (do NOT include leading numbers or bullets; the client will number them).`
+
+    let videoMeta = null
+    if (includeVideo && YT_KEY) {
+      try {
+        const query = encodeURIComponent(list.slice(0,6).join(' ')+ ' recipe')
+        const ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${query}&key=${YT_KEY}`
+        const ytResp = await fetch(ytUrl)
+        const ytJson = await ytResp.json().catch(()=>({}))
+        const item = ytJson?.items?.[0]
+        if (item?.id?.videoId) {
+          videoMeta = {
+            id: item.id.videoId,
+            title: item.snippet?.title || '',
+            channel: item.snippet?.channelTitle || '',
+            description: (item.snippet?.description || '').slice(0, 800),
+            url: `https://www.youtube.com/watch?v=${item.id.videoId}`
+          }
+        }
+      } catch (e) {
+        console.warn('[youtube] search failed:', e?.message)
+      }
+    }
+
+    function cleanVideoTitle(raw) {
+      if (!raw) return ''
+      let t = raw
+      // Remove common YouTube clutter
+  t = t.replace(/official video|full tutorial|easy recipe|\brecipe\b|how to (?:make|cook)\b/gi, '')
+      t = t.replace(/\b(best|easy|ultimate|perfect|quick|simple|homemade|authentic)\b/gi, '')
+      t = t.replace(/\[[^\]]+\]|\([^)]*\)|\{[^}]*\}/g, '') // remove bracketed
+      t = t.replace(/[#@].+$/g, '')
+      t = t.replace(/[-–—_.]+/g, ' ')
+      t = t.replace(/\s{2,}/g, ' ').trim()
+      // Capitalize first letters
+      t = t.split(' ').map(w => w ? w[0].toUpperCase()+w.slice(1).toLowerCase() : w).join(' ')
+      // Remove trailing generic words
+      t = t.replace(/\b(Recipe|Video|Tutorial)\b$/i, '').trim()
+      return t || raw
+    }
+
+  const videoContext = videoMeta ? `\nA relevant YouTube cooking tutorial was found. Use it as authoritative style guidance. VIDEO TITLE: ${videoMeta.title}\nCHANNEL: ${videoMeta.channel}\nVIDEO DESCRIPTION (may contain extra or missing ingredients, adapt intelligently):\n"""${videoMeta.description}"""\nAdjust steps to reflect professional best practice while respecting the user's ingredient list primarily. If the video introduces additional common ingredients that substantially improve the dish, you MAY add up to 3 of them, listing them ALSO inside extrasMentioned. If any of the user's ingredients are absent from the video but still compatible, incorporate them logically. Provide a short adaptation note explaining deviations.` : ''
+
+  const userPrompt = `Ingredients:\n${userList}\n${includeVideo ? '\nUser requested video-guided recipe generation (may add or omit some items to align with tutorial).':''}\n\nConstraints:\n- Correct obvious typos in ingredient names and ignore non-food/random words.\n- If fewer than 2 valid ingredients remain after correction, produce the minimal refusal object specified in the system instructions.\n- Output JSON ONLY with fields: title (string), summary (string), time (string), servings (number), ingredients (array of { name, quantity? }), steps (string[]), extrasMentioned (string[]), adaptationNote (string optional).\n- Ingredients: include the provided items; add minimal pantry items only if needed. Provide quantities in common kitchen units (g, ml, tsp, tbsp, cups, pieces).\n- Servings: default to 2 if unspecified.\n- Time: realistic estimate.\n- Steps: clear instructions as an array of strings (do NOT include leading numbers or bullets; the client will number them).${videoContext}`
 
   // Live API only
 
@@ -130,13 +173,25 @@ export default async function handler(req, res) {
       text = await callGeminiREST({ apiKey: API_KEY, modelId: MODEL_ID, systemInstruction: SYSTEM_INSTRUCTION, prompt: fallbackPrompt, structured: false })
     }
 
-    let data
+  let data
     try { data = JSON.parse(text) } catch {
       const match = text.match(/\{[\s\S]*\}/)
       data = match ? JSON.parse(match[0]) : null
     }
 
   if (!data) return res.status(502).json({ error: 'Invalid model response', raw: text })
+  if (videoMeta) {
+    data.video = videoMeta
+    if (includeVideo && !data.adaptationNote) {
+      data.adaptationNote = 'Recipe adapted using a YouTube tutorial; minor ingredient adjustments may have been applied.'
+    }
+    // Override title from cleaned video title if we can extract a concise dish name
+    const cleaned = cleanVideoTitle(videoMeta.title)
+    if (cleaned && typeof data.title === 'string' && cleaned.length <= 70) {
+      data.title = cleaned
+    }
+  }
+  data.includeVideo = !!includeVideo
   res.setHeader('Content-Type', 'application/json')
   return res.status(200).json(data)
   } catch (err) {

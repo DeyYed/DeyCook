@@ -159,6 +159,26 @@ export default function RecipeSection({ loading, recipe }) {
             </div>
           </div>
           <div className="mt-2 text-neutral-700">{recipe.summary}</div>
+          {recipe.adaptationNote && (
+            <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+              {recipe.adaptationNote}
+            </div>
+          )}
+          {recipe.video?.id && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-neutral-800 mb-2">Tutorial Video</h3>
+              <div className="aspect-video w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+                <iframe
+                  src={`https://www.youtube.com/embed/${recipe.video.id}`}
+                  title={recipe.video.title || 'Tutorial Video'}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              </div>
+              <div className="mt-2 text-xs text-neutral-600 line-clamp-3">{recipe.video.title} {recipe.video.channel ? `• ${recipe.video.channel}` : ''}</div>
+            </div>
+          )}
           {Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && (
             <div className="mt-4">
               <h3 className="text-sm font-medium text-neutral-800">Ingredients</h3>

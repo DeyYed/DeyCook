@@ -1,3 +1,6 @@
+// Legacy Express server (deprecated for local dev):
+// Local development now uses serverless-style handlers in /api via Vite middleware.
+// This file is kept only for optional standalone server usage or migration references.
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
