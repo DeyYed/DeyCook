@@ -1,4 +1,4 @@
-import { ChefHat } from './Icons'
+// Replaced ChefHat icon with static logo asset
 
 export default function Hero() {
   return (
@@ -13,10 +13,16 @@ export default function Hero() {
           </p>
         </div>
         <div className="hidden sm:block justify-self-end">
-          <div className="relative">
-            <div className="h-28 w-28 rounded-full bg-neutral-100 absolute -top-4 -right-6" aria-hidden />
-            <div className="relative">
-              <ChefHat className="h-14 w-14 text-neutral-400 chef-hat-float" />
+          <div className="relative h-40 w-40">
+            <div className="absolute inset-0 rounded-full bg-neutral-100" aria-hidden />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img
+                src="/chef-icon-logo.png"
+                alt="Chef logo"
+                className="h-28 w-28 object-contain select-none app-logo-float"
+                draggable={false}
+                loading="lazy"
+              />
             </div>
           </div>
         </div>
